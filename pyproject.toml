@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sporty-technical-test-aleix"
+version = "0.1.0"
+description = "QA technical test — Single Bet Placement (API + Selenium)"
+requires-python = ">=3.13"
+dependencies = [
+    "requests",
+    "python-dotenv",
+    "selenium",
+    "pytest",
+]
+
+# src layout: packages (utils, tests, ...) live under src/
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s - %(levelname)s - %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
