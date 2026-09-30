@@ -53,7 +53,7 @@ class Currency(str, Enum):
 
 
 class StakeLimit(float, Enum):
-    """Per-bet stake limits (EUR) """
+    """Per-bet stake limits (EUR)"""
 
     MIN = 1.00
     MAX = 100.00

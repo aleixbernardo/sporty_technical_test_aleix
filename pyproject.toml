@@ -14,9 +14,34 @@ dependencies = [
     "pytest",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "black==26.3.1",
+    "isort",
+    "flake8",
+    "flake8-tidy-imports",
+    "pre-commit",
+]
+
 # src layout: packages (utils, tests, ...) live under src/
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.black]
+line-length = 88
+target-version = ['py313']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
