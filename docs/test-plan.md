@@ -2,10 +2,10 @@
 
 **Scope:** Desktop web, Soccer/Football, pre-match, single bet only.
 
-**Approach:** Risk-based prioritization. The 9 scenarios below span the core happy path, stake
-boundary conditions, financial-integrity negatives, sequential placement, selection validation,
-the date/odds filters and filter persistence — the areas where a betting flow carries the most
-user, money, and trust risk. They are ordered by priority (Critical → High → Medium).
+**Approach:** Risk-based prioritization. The 6 scenarios below span the core happy path, stake
+boundary conditions, financial-integrity negatives, double-submit protection, selection validation
+and the date/odds filters — the areas where a betting flow carries the most user, money, and trust
+risk. They are ordered by priority (Critical → High → Medium).
 
 Where the spec requires validation at the **UI + API** layer, each scenario is checked at **both**:
 the UI guard is not assumed to be the only line of security, so the API is called directly —
@@ -19,12 +19,9 @@ confirm the server rejects what the web blocks.
 | TC-01 | Place a valid single bet — end-to-end happy path | Critical |
 | TC-02 | Insufficient balance must be rejected | Critical |
 | TC-03 | Stake boundary & precision validation | High |
-| TC-04 | Place multiple sequential bets (different & same match) | High |
-| TC-05 | Double-click Place Bet must not place two bets | High |
-| TC-06 | Selection required / invalid selection rejected | Medium |
-| TC-07 | Odds filter range validation (out-of-range odds) | Medium |
-| TC-08 | Date filter (single day & inclusive range) | Medium |
-| TC-09 | Filter persists after placing a bet | Medium |
+| TC-04 | Double-click Place Bet must not place two bets | High |
+| TC-05 | Selection required / invalid selection rejected | Medium |
+| TC-06 | Filters: date & odds range validation | Medium |
 
 ---
 
@@ -130,34 +127,7 @@ validation at the **UI + API** layer, so whatever the web blocks must also be re
 
 ---
 
-### TC-04 — Place multiple sequential bets (different & same match)
-
-**Priority:** High
-
-**Risk Rationale:** A real user rarely stops at one bet. "Single bet only" means one selection per
-placement, not one bet per session, so placing a bet must not block the next one. This checks that
-each bet is independent (its own receipt and Bet ID), the slip resets between bets, and the balance
-deducts cumulatively and correctly. The spec defines no per-match uniqueness rule, so betting the
-**same** match again (even a different outcome) is allowed.
-
-**Steps:**
-1. Reset balance.
-2. Place bet #1 on match A (e.g. Man Utd–Chelsea, HOME, stake `10`). Close the receipt.
-3. Place bet #2 on a **different** match B (e.g. Real–Barça, AWAY, stake `20`). Close the receipt.
-4. Place bet #3 on the **same** match A again, same selection (HOME stake `5`).
-
-**API check (same flow, direct):** three separate `POST /api/place-bet` calls, then `GET /api/balance`.
-
-**Expected Result:**
-- All three placements succeed, each with its own receipt and distinct Bet ID.
-- Between bets the slip is empty (no leftover selection).
-- Balance decreases cumulatively by the sum of the stakes (`10 + 20 + 5 = 35` total).
-- API returns three `200`s and `GET /api/balance` reflects the cumulative total; the same match
-  can be bet more than once.
-
----
-
-### TC-05 — Double-click Place Bet must not place two bets
+### TC-04 — Double-click Place Bet must not place two bets
 
 **Priority:** High
 
@@ -180,7 +150,7 @@ server's per-user concurrency lock is the backstop.
 
 ---
 
-### TC-06 — Selection required / invalid selection rejected
+### TC-05 — Selection required / invalid selection rejected
 
 **Priority:** Medium
 
@@ -208,67 +178,31 @@ directly to confirm the server enforces it too:
 
 ---
 
-### TC-07 — Odds filter range validation (out-of-range odds)
+### TC-06 — Filters: date & odds range validation
 
 **Priority:** Medium
 
-**Risk Rationale:** Invalid filtering on UI/UX can lead to a bad user experience and 
-therefore dissatisfaction of the user, as well as not finding the game that the user
-wants to bet in and possibly a missing bet which is less revenue for the company.
+**Risk Rationale:** Broken or confusing filters hurt UX and can hide the match a user wants to bet
+on — a lost bet is lost revenue. Per spec 2.6 the date filter supports a single day or an inclusive
+range, and the odds filter supports an inclusive min/max range that must reject invalid ranges with
+clear feedback.
 
-**UI steps:**
-1. Open app (default `Odds: 1.00 - 10.00` → all matches shown).
+**UI steps — odds filter:**
+1. Default `Odds: 1.00 - 10.00` shows all matches.
 2. Apply a valid inclusive range (e.g. min `2.00`, max `3.00`).
 3. Apply an **invalid** range where min > max (e.g. min `5.00`, max `2.00`).
-4. Apply and **invalid**  range where odds is < 1
-5. Click reset button and check if filter resetting works.
 
-**API steps (with endpoint):** the filter is client-side, so no tests here.
-
-**Expected Result:**
-- *UI:* a valid range shows only matches whose any of the 3 odds fall inside it (inclusive of both bounds). An
-  invalid range (min > max) is **rejected with clear feedback** (not silently empty), as required
-  by spec 2.6.
-
----
-
-### TC-08 — Date filter (single day & inclusive range)
-
-**Priority:** Medium
-
-**Risk Rationale:** Invalid filtering on UI/UX can lead to a bad user experience and 
-therefore dissatisfaction of the user, as well as not finding the game that the user
-wants to bet in and possibly a missing bet which is less revenue for the company.
-
-**UI steps:**
-1. Open app (default is `Date: All` → all `103` matches shown).
+**UI steps — date filter:**
+1. Default `Date: All` shows all `103` matches.
 2. Filter by a **single day** that has matches (e.g. `2026-03-01`).
-3. Filter by a **date range** (e.g. `2026-03-01` → `2026-03-05`), checking the boundary dates
-   themselves are included.
-4. Filter by a day (e.g. `2026-04-01`) and then click a day before it (`2026-03-01`)
-5. Reset filter and check 103 matches shown
+3. Filter by a **date range** (e.g. `2026-03-01` → `2026-03-05`), checking both boundary dates are
+   included.
+4. Apply an invalid range (start after end), then reset the filter.
 
 **Expected Result:**
-- *UI:* `Date: All` shows every match. A single-day filter shows only that day's matches. A range
-  shows only matches within `[start, end]` **inclusive** of both bounds. When reverting the filters as in *4* , filter works correctly.
-
----
-
-### TC-09 — Filter persists after placing a bet
-
-**Priority:** Medium
-
-**Risk Rationale:** A user who filters the list, picks a match and bets expects to return to the
-**same filtered view** to keep betting. If placing a bet silently resets the filter back to "All",
-the user loses their context and has to re-filter every time — a frustrating UX that discourages
-further bets (less revenue).
-
-**UI steps:**
-1. Apply a filter (e.g. `Odds: 2.00 - 3.00`, or a date range) so the list is narrowed.
-2. Select a match **from the filtered results** and place a valid bet.
-3. Close the success receipt and look at the match list and the filter controls.
-
-**Expected Result:**
-- The filter is **still applied** after the bet: the same filtered results are shown and the filter
-  control still displays the chosen range/date (it is not reset to `All`).
-- Only the bet slip is cleared (no active selection); the filter state is preserved.
+- *Odds:* a match is shown if **at least one** of its three odds falls within the range (inclusive);
+  an invalid range (min > max) is **rejected with clear feedback**, not silently empty.
+- *Date:* `All` shows every match; a single day shows only that day's matches; a range shows only
+  matches within `[start, end]` inclusive; an invalid/reset range restores the full list.
+- Filters are client-side (`GET /api/matches` takes no filter params), so these are UI checks; the
+  API side is just a data-integrity check that every odds value sits within `1.01`–`1000.00`.
