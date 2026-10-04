@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sporty-technical-test-aleix"
+version = "0.1.0"
+description = "QA technical test — Single Bet Placement (API + Selenium)"
+requires-python = ">=3.13"
+dependencies = [
+    "requests",
+    "python-dotenv",
+    "selenium",
+    "pytest",
+    "pydantic",
+    "allure-pytest",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black==26.3.1",
+    "isort",
+    "flake8",
+    "flake8-tidy-imports",
+    "pre-commit",
+]
+
+# src layout: packages (utils, tests, ...) live under src/
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 88
+target-version = ['py313']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = [
+    "--alluredir=allure-results",
+    "--allure-link-pattern=issue:docs/bug-report.md#{}",
+    "--allure-link-pattern=tms:docs/test-plan.md#{}",
+]
+markers = [
+    "api: API-level tests driven with requests",
+    "ui: end-to-end UI tests driven with Selenium",
+]
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s - %(levelname)s - %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
