@@ -42,6 +42,16 @@ def get_base_url() -> str:
     return base_url
 
 
+def get_user_id() -> str:
+    """Return the `x-user-id` session token from the environment."""
+    user_id = getenv(EnvVar.X_USER_ID.value)
+    if not user_id:
+        raise EnvironmentError(
+            f"{EnvVar.X_USER_ID.value} environment variable is not set."
+        )
+    return user_id
+
+
 def create_url(path: str, base_url: str | None = None) -> str:
     """Join BASE_URL with an endpoint path."""
     base = (base_url or get_base_url()).rstrip("/")

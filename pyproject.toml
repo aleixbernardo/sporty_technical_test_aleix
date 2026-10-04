@@ -12,6 +12,8 @@ dependencies = [
     "python-dotenv",
     "selenium",
     "pytest",
+    "pydantic",
+    "allure-pytest",
 ]
 
 [project.optional-dependencies]
@@ -45,6 +47,16 @@ line_length = 88
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = [
+    "--alluredir=allure-results",
+    "--allure-link-pattern=issue:docs/bug-report.md#{}",
+    "--allure-link-pattern=tms:docs/test-plan.md#{}",
+]
+markers = [
+    "api: API-level tests driven with requests",
+    "ui: end-to-end UI tests driven with Selenium",
+]
 log_cli = true
 log_cli_level = "INFO"
 log_cli_format = "%(asctime)s - %(levelname)s - %(message)s"

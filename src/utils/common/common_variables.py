@@ -4,23 +4,23 @@ Grouped as Enums so tests reference names instead of magic values,
 mirroring the `common_variables` pattern used in backend-tests.
 """
 
-from enum import Enum, IntEnum
+from enum import Enum, IntEnum, StrEnum
 
 
-class EnvVar(str, Enum):
+class EnvVar(StrEnum):
     """Names of the environment variables read from `.env`."""
 
     BASE_URL = "BASE_URL"
     X_USER_ID = "X_USER_ID"
 
 
-class RequestHeader(str, Enum):
+class RequestHeader(StrEnum):
     """HTTP header names required by the API."""
 
     X_USER_ID = "x-user-id"
 
 
-class ApiEndpoint(str, Enum):
+class ApiEndpoint(StrEnum):
     """API paths (relative to BASE_URL)."""
 
     MATCHES = "/api/matches"
@@ -31,7 +31,7 @@ class ApiEndpoint(str, Enum):
     DOCS_JSON = "/api/docs?format=json"
 
 
-class Selection(str, Enum):
+class Selection(StrEnum):
     """Valid bet selections (API contract)."""
 
     HOME = "HOME"
@@ -39,7 +39,7 @@ class Selection(str, Enum):
     AWAY = "AWAY"
 
 
-class OddsButton(str, Enum):
+class OddsButton(StrEnum):
     """UI odds-button labels mapped to their selection."""
 
     HOME = "1"
@@ -47,7 +47,7 @@ class OddsButton(str, Enum):
     AWAY = "2"
 
 
-class Currency(str, Enum):
+class Currency(StrEnum):
     CODE = "EUR"
     SYMBOL = "€"
 
@@ -80,7 +80,7 @@ class HttpStatus(IntEnum):
     SERVER_ERROR = 500  # unexpected server failure
 
 
-class ApiErrorCode(str, Enum):
+class ApiErrorCode(StrEnum):
     """`error` codes returned in API error bodies ({error, message}).
 
     Confirmed from the OpenAPI spec and live responses.
@@ -105,7 +105,7 @@ class ApiErrorCode(str, Enum):
     INSUFFICIENT_BALANCE = "insufficient_balance"  # stake exceeds balance
 
 
-class UiErrorMessage(str, Enum):
+class UiErrorMessage(StrEnum):
     """Minimum expected UI error copy (spec 4.4)."""
 
     MIN_STAKE = "Minimum stake is €1.00"
@@ -113,9 +113,9 @@ class UiErrorMessage(str, Enum):
     INSUFFICIENT_BALANCE = "Insufficient balance"
 
 
-class ErrorModal(str, Enum):
+class ErrorModal(StrEnum):
     TITLE = "Something went wrong"
 
 
-class PlaceBetButtonState(str, Enum):
+class PlaceBetButtonState(StrEnum):
     LOADING = "Placing..."
