@@ -3,12 +3,14 @@
 Test automation for the **Single Bet Placement** feature of the
 [Sports Betting QA app](https://qae-assignment-tau.vercel.app).
 
-The project is split into two parts:
+The deliverables are split into three parts:
 
-- **Part A — Manual QA & Strategy** (`docs/`): [`test-plan.md`](docs/test-plan.md) (prioritised
-  scenarios) and [`bug-report.md`](docs/bug-report.md) (defects found during execution).
+- **Part A — Manual QA** (`docs/`): [`test-plan.md`](docs/test-plan.md) (prioritised scenarios) and
+  [`bug-report.md`](docs/bug-report.md) (defects found during execution).
 - **Part B — Automation** (this framework): a small, layered Selenium + API suite with two
   high-value tests.
+- **Part C — Strategy** (`docs/`): [`strategy.md`](docs/strategy.md) — test-selection rationale and
+  scaling recommendations.
 
 ## Stack & tooling choices
 
@@ -43,20 +45,19 @@ src/
         bet_slip.py          # stake entry, payout, Place Bet
         receipt_modal.py     # success receipt assertions + close
 tests/
-  conftest.py                # fixtures: base_url, user_id, fresh_balance, first_match, driver, page
+  conftest.py                # fixtures: base_url, user_id, fresh_balance, first_match, driver, match_list_page
   api/test_place_bet_happy_path.py
   ui/test_place_bet_journey.py
-docs/                        # Part A deliverables
-.github/workflows/ci.yml     # CI
+docs/                        # Part A & C deliverables
 ```
 
 ### Page Object Model
 
 UI tests never touch raw locators. Each screen/component is a page object that exposes
-intent-level methods (`select_outcome`, `enter_stake`, `place_bet`, `wait_until_visible`) and keeps
-its locators private. `BasePage` centralises the explicit waits. Because the app is a React build
-with hashed class names, locators are text/attribute based, and a `ci_contains` helper handles
-labels that CSS renders uppercase (e.g. `PLACE BET`, `CLOSE`).
+intent-level methods (`select_outcome`, `enter_stake`, `place_bet`, `wait_until_placing`) and keeps
+its locators private. `BasePage` centralises the explicit waits. Locators are **id-based**: the app
+exposes stable ids (`odds-<matchId>-<home|draw|away>`, `bet-slip-*`, `modal-success`), which are far
+more robust than XPath/text against this React build's hashed class names.
 
 ## Setup
 
@@ -107,23 +108,4 @@ allure open allure-report
 
 The report includes per-test **steps**, **severity**, the **epic / feature / story** tree, links to
 the test plan (**TMS**) and the bug report (**issue**), and a **screenshot** attached automatically
-when a UI test fails. In CI the `allure-results` folder is uploaded as a build artifact.
-
-## The two automated tests
-
-- **API — `test_place_bet_happy_path.py`**: fetches the catalogue (`first_match` fixture), places a
-  bet on the first match and asserts the server computes the payout (`stake × odds`) and debits the
-  balance, cross-checked against `GET /api/balance`. Responses are parsed into **pydantic schemas**
-  (`src/schemas/`) so the contract shape is validated, not just the values. The core money path.
-- **UI (E2E) — `test_place_bet_journey.py`**: the critical user journey — select odds → enter stake
-  → verify the slip payout → place the bet → assert the success receipt (Bet ID, stake, odds).
-
-Each test file opens with a docstring explaining why it was chosen. Tests reset the balance via a
-fixture for determinism.
-
-## CI/CD
-
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push to `main` and on pull
-requests: it sets up Python 3.13 and Chrome, installs the package and runs the API and UI suites.
-The `X_USER_ID` is provided as a GitHub Actions secret (`secrets.X_USER_ID`); `BASE_URL` and
-`HEADLESS=true` are set in the workflow env.
+when a UI test fails.

@@ -3,7 +3,7 @@
 Why this test: it validates the core money path of the product at the contract level —
 fetch the catalogue, place a bet on a real match, and confirm the server computes the
 payout and debits the balance correctly. It mirrors what the UI does but without a
-browser, so it is a fast, stable guard for the most business-critical behaviour.
+browser, so it is a fast, stable guard for the most business-critical behavior.
 
 Note: the starting balance is read from `GET /api/balance` rather than from the
 reset-balance response, because those two values are not consistent here (BUG-06).

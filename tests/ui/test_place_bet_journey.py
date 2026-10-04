@@ -4,7 +4,7 @@ Why this test: placing a bet is the core revenue path of the product. If a user 
 select an outcome, enter a stake and receive a confirmed receipt, nothing else matters.
 This exercises the full happy path through the real UI — odds selection, stake entry,
 payout calculation, placement and the success receipt — the single highest-value journey
-to keep green.
+to keep green, as well as the deducted balance.
 """
 
 import allure
