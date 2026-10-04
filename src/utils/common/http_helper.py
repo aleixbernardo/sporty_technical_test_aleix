@@ -22,11 +22,6 @@ logger = getLogger(__name__)
 DEFAULT_TIMEOUT = 30
 MAX_RETRIES = 3
 
-# Sentinel: default behaviour is "read x-user-id from the environment".
-# Pass user_id=None to omit the header (unauthorized tests) or a string to
-# override it (invalid user-context tests).
-USER_ID_FROM_ENV = object()
-
 
 def get_base_url() -> str:
     base_url = getenv(EnvVar.BASE_URL.value)
@@ -59,34 +54,23 @@ def create_url(path: str, base_url: str | None = None) -> str:
 
 
 def get_headers(
-    user_id: object | str | None = USER_ID_FROM_ENV,
+    user_id: str | None = None,
     additional_headers: dict | None = None,
 ) -> dict:
-    """Build request headers, resolving the `x-user-id` header.
+    """Build request headers with the required `x-user-id`.
 
-    - user_id=USER_ID_FROM_ENV (default): use X_USER_ID from the environment.
-    - user_id=None: omit the header entirely (for 401 tests).
-    - user_id=<str>: use that value verbatim (for invalid-context tests).
+    Uses the id from the environment unless one is passed in (e.g. to run a test
+    under a different user).
     """
     headers = dict(additional_headers or {})
-
-    if user_id is USER_ID_FROM_ENV:
-        env_value = getenv(EnvVar.X_USER_ID.value)
-        if not env_value:
-            raise EnvironmentError(
-                f"{EnvVar.X_USER_ID.value} environment variable is not set."
-            )
-        headers[RequestHeader.X_USER_ID.value] = env_value
-    elif user_id is not None:
-        headers[RequestHeader.X_USER_ID.value] = user_id
-
+    headers[RequestHeader.X_USER_ID.value] = user_id or get_user_id()
     return headers
 
 
 def fetch_and_log_response(
     url: str,
     method: Callable[..., Response],
-    user_id: object | str | None = USER_ID_FROM_ENV,
+    user_id: str | None = None,
     additional_headers: dict | None = None,
     timeout: int = DEFAULT_TIMEOUT,
     **kwargs,
