@@ -2,12 +2,14 @@
 
 ## Why these 2 tests were automated
 
-I automated the **single highest-value flow at both layers it lives on**:
+I automated the **single highest-value flow at both layers it lives on**, because of the time constraints
+and being able only to automate 2, I decided to automate the 2 scenarios that are covered by the most
+actions and endpoints:
 
 - **E2E UI — place a single bet (`tests/ui/test_place_bet_journey.py`).** This is the core revenue
   journey and the one test that exercises the most integration risk in a single run: odds selection
   → stake entry → payout calculation → `Placing...` state → success receipt. If this is green, a
-  real user can actually bet. It is the obvious P0 to protect against regressions.
+  real user can actually bet.
 - **API — place-bet happy path (`tests/api/test_place_bet_happy_path.py`).** The same money flow at
   the contract level: it fetches the catalogue, places a bet and verifies `payout = stake × odds`
   and the balance deduction, with responses validated by pydantic schemas. It is fast, deterministic
@@ -15,32 +17,20 @@ I automated the **single highest-value flow at both layers it lives on**:
   in the UI.
 
 Together they cross-check each other: UI green + API green means the critical path works end to end
-on both the client and the server.
+on both the client and the server. 
 
 ### Why these over other candidates
 
 - I picked the application's most important feature — **betting** — and automated it as smoke tests
   from both the full web end-to-end and the API directly. If either of these two tests fails, the
   build should not go to production, because it carries all the business risk.
+- With only two tests to spend, they give the **broadest coverage per test**: between them they hit
+  every endpoint in the flow (`matches`, `place-bet`, `balance`, `reset-balance`) and the full UI
+  journey — the best coverage-to-effort ratio given the number of possible cases and the time
+  constraints.
 - I deliberately kept the corner cases out of this first set: they are many and individually
   low-impact, and several are already **known defects** (see `bug-report.md`) that would only produce
   red tests. They belong in the bug tracker and in a future data-driven layer, not in the smoke set.
-
-## What I intentionally left as manual-only, and why
-
-- **Boundary & validation matrix** (stake min/max/precision/negative/non-numeric, invalid selection,
-  missing/unknown matchId). Many permutations, each low-impact; catalogued in `test-plan.md` and
-  verified by hand. Better as a future parametrised API suite than as top-level tests.
-- **Known defects** (negative stake, insufficient balance, currency, reset mismatch, past matches,
-  malformed-JSON 500). Verified manually with evidence; not automated as passing tests because they
-  would be red — they become regression tests once fixed.
-- **Error modal / recovery (Rebet / Close).** No deterministic trigger from the UI (the `409` is a
-  concurrency race, the `500` needs a malformed body the UI never sends), so it stays exploratory
-  until there is a reliable hook (e.g. a network stub).
-- **Filters (date / odds) and persistence.** Client-side behaviour with product ambiguity (the odds
-  filter matches on *any* outcome) — worth confirming intent before locking it into automation.
-- **Exploratory / visual / UX.** Human judgement finds the high-impact bugs; not worth brittle
-  automation yet.
 
 ## Top recommendations if this were to scale
 
